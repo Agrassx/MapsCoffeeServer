@@ -22,7 +22,7 @@ public class API extends Controller {
     @Inject
     WSClient ws;
 
-    private static final String API_VERSION = "1.0";
+    private static final String API_VERSION = "0.2.1";
     private Config config;
 
     public F.Promise<Result> points(String n, String s, String w, String e) {
