@@ -4,9 +4,9 @@
 
 # Home page
 GET     /                           controllers.Application.index()
-GET     /api/points                 controllers.API.points(n, s, w, e: String)
-PUT     /api/addPoint               controllers.API.addPoint()
-GET     /api/status                 controllers.API.status()
+GET     /api/v2/points                 controllers.API.points(n, s, w, e: String)
+PUT     /api/v2/addPoint               controllers.API.addPoint()
+GET     /api/v2/status                 controllers.API.status()
 
 
 # Map static resources from the /public folder to the /assets URL path

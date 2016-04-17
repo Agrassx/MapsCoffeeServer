@@ -3,6 +3,8 @@ package controllers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import play.libs.F;
 import play.libs.Json;
 import play.libs.ws.WSClient;
@@ -20,13 +22,16 @@ public class API extends Controller {
     @Inject
     WSClient ws;
 
-    private static final String ELASTIC_URL = "http://localhost:9200/map/coffee/_search";
-    private static final String ELASTIC_ADD_POINT_URL = "http://localhost:9200/map/coffee/";
     private static final String API_VERSION = "1.0";
+    private Config config;
 
     public F.Promise<Result> points(String n, String s, String w, String e) {
-        WSRequest request = ws.url(ELASTIC_URL);
+        WSRequest request = ws.url(getSearchUrl());
         F.Promise<WSResponse> responsePromise = request.post(getRequestBody(n, s, w, e));
+
+        play.Logger.debug(getSearchUrl());
+        play.Logger.debug(getAddPointUrl());
+
         return responsePromise.map(response -> ok(getJsonPoints(response.asJson())));
     }
 
@@ -86,7 +91,7 @@ public class API extends Controller {
                 .put("lon", longitude);
         play.Logger.debug(String.format("Name: %s, lat: %f, lon: %f; \n Json: %s", name, latitude, longitude, newPoint));
 
-        WSRequest request = ws.url(ELASTIC_ADD_POINT_URL).setContentType("application/json");
+        WSRequest request = ws.url(getAddPointUrl()).setContentType("application/json");
 
         F.Promise<WSResponse> responsePromise = request.post(newPoint.toString());
 
@@ -103,6 +108,16 @@ public class API extends Controller {
         status.put("version", API_VERSION);
         F.Promise<JsonNode> responsePromise = F.Promise.promise(() -> status);
         return responsePromise.map(Results::ok);
+    }
+
+    private String getSearchUrl() {
+        config = ConfigFactory.load();
+        return config.getString("url.search");
+    }
+
+    private String getAddPointUrl() {
+        config = ConfigFactory.load();
+        return config.getString("url.addPoint");
     }
 
 }

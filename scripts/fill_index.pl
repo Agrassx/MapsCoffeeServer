@@ -3,6 +3,13 @@ use warnings;
 use utf8;
 use feature 'say';
 
+=info 
+
+If this script doesn't work, please, read README file
+
+=cut
+
+
 use Mojo::UserAgent;
 use Data::Dumper;
 use XML::Simple;
