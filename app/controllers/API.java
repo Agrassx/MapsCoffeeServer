@@ -160,5 +160,4 @@ public class API extends Controller {
         return config.getString("url.validateToken")+id_token;
     }
 
-    
 }
