@@ -3,11 +3,10 @@
 # ~~~~
 
 # Home page
-GET     /                              controllers.Application.index()
-GET     /api/v3/points                 controllers.API.points(n, s, w, e: String)
-PUT     /api/v3/addPoint               controllers.API.addPoint()
-GET     /api/v3/status                 controllers.API.status()
-GET     /api/v3/testValidate           controllers.API.testValidate(token: String)
+GET     /                           controllers.Application.index()
+GET     /api/points                 controllers.API.points(n, s, w, e: String)
+PUT     /api/addPoint               controllers.API.addPoint()
+GET     /api/status                 controllers.API.status()
 
 
 # Map static resources from the /public folder to the /assets URL path

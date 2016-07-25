@@ -22,85 +22,18 @@ public class API extends Controller {
     @Inject
     WSClient ws;
 
-    private static final String API_VERSION = "0.2.1";
-    private Config config = ConfigFactory.load();
+    private static final String API_VERSION = "1.0";
+    private Config config;
 
     public F.Promise<Result> points(String n, String s, String w, String e) {
         WSRequest request = ws.url(getSearchUrl());
         F.Promise<WSResponse> responsePromise = request.post(getRequestBody(n, s, w, e));
 
         play.Logger.debug(getSearchUrl());
+        play.Logger.debug(getAddPointUrl());
 
         return responsePromise.map(response -> ok(getJsonPoints(response.asJson())));
     }
-
-
-    @BodyParser.Of(BodyParser.Json.class)
-    public F.Promise<Result> addPoint() {
-
-        JsonNode json = request().body().asJson();
-        String name = json.findPath("name").textValue();
-        double latitude = json.get("location").get("lat").asDouble();
-        double longitude = json.get("location").get("lon").asDouble();
-
-        String id_token = json.findPath("access_token").textValue();
-        play.Logger.debug("id_token = " + id_token);
-
-        ObjectNode newPoint = Json.newObject();
-        newPoint.put("name", name);
-        newPoint.put("opening_hours", "");
-        newPoint.putObject("location")
-                .put("lat", latitude)
-                .put("lon", longitude);
-
-        play.Logger.debug(String.format("Name: %s, lat: %f, lon: %f; \n Json: %s", name, latitude, longitude, newPoint));
-
-        WSRequest request = ws.url(getAddPointUrl()).setContentType("application/json");
-        F.Promise<WSResponse> responsePromise;
-
-        if (isValidToken(id_token)) {
-            responsePromise = request.post(newPoint.toString());
-
-            return responsePromise.map(response -> {
-                String result = response.getBody();
-                play.Logger.debug(result);
-                return ok(response.asJson());
-            });
-
-        } else {
-            responsePromise = null;
-            ObjectNode status = Json.newObject();
-            status.put("status", "error");
-            status.put("point", newPoint);
-            status.put("reason", "invalid token");
-            return responsePromise.map(wsResponse -> unauthorized(status));
-        }
-    }
-
-    public F.Promise<Result> testValidate(String token) {
-        WSRequest request = ws.url(getValidateTokenUrl(token));
-
-        F.Promise<WSResponse> responsePromise = request.get();
-        return responsePromise.map(response -> {
-            play.Logger.debug(response.getBody());
-            if (response.getStatus() == 200) {
-                return ok(response.getBody());
-            } else {
-                return unauthorized("fail");
-            }
-        });
-    }
-
-    public F.Promise<Result> status() {
-        ObjectNode status = Json.newObject();
-        status.put("status", "ok");
-        status.put("version", API_VERSION);
-        F.Promise<JsonNode> responsePromise = F.Promise.promise(() -> status);
-        return responsePromise.map(Results::ok);
-    }
-
-
-
 
     private JsonNode getJsonPoints(JsonNode response) {
         ObjectNode result = Json.newObject();
@@ -142,23 +75,53 @@ public class API extends Controller {
                 n, w, s, e);
     }
 
-    private Boolean isValidToken(String idStringToken)  {
-        WSRequest request = ws.url(getValidateTokenUrl(idStringToken));
-        F.Promise<WSResponse> responsePromise = request.get();
-        return responsePromise.map(response -> response.getStatus() == 200).get(3000);
+    @BodyParser.Of(BodyParser.Json.class)
+    public F.Promise<Result> addPoint() {
+
+        JsonNode json = request().body().asJson();
+        String name = json.findPath("name").textValue();
+        double latitude = json.get("location").get("lat").asDouble();
+        double longitude = json.get("location").get("lon").asDouble();
+
+        ObjectNode newPoint = Json.newObject();
+        newPoint.put("name", name);
+        newPoint.put("opening_hours", "");
+        newPoint.putObject("location")
+                .put("lat", latitude)
+                .put("lon", longitude);
+        play.Logger.debug(String.format("Name: %s, lat: %f, lon: %f; \n Json: %s", name, latitude, longitude, newPoint));
+
+        WSRequest request = ws.url(getAddPointUrl()).setContentType("application/json");
+
+        F.Promise<WSResponse> responsePromise = request.post(newPoint.toString());
+
+        return responsePromise.map(response -> {
+            String result = response.getBody();
+            play.Logger.debug(result);
+            return ok(response.asJson());
+        });
+    }
+
+    public F.Promise<Result> status() {
+        ObjectNode status = Json.newObject();
+        status.put("status", "ok");
+        status.put("version", API_VERSION);
+        F.Promise<JsonNode> responsePromise = F.Promise.promise(() -> status);
+        return responsePromise.map(Results::ok);
     }
 
     private String getSearchUrl() {
+        config = ConfigFactory.load();
         return config.getString("url.search");
     }
 
     private String getAddPointUrl() {
+        config = ConfigFactory.load();
         return config.getString("url.addPoint");
     }
-
+    
     private String getValidateTokenUrl(String id_token) {
         return config.getString("url.validateToken")+id_token;
     }
 
-    
 }
