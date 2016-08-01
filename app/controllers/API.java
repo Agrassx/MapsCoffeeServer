@@ -29,7 +29,7 @@ public class API extends Controller {
         WSRequest request = ws.url(getSearchUrl());
         F.Promise<WSResponse> responsePromise = request.post(getRequestBody(n, s, w, e));
 
-        play.Logger.debug(getSearchUrl());
+        play.Logger.debug(String.format("N - : %s, E - : %s, W - : %s, E - : %s", n, s, w, e));
 
         return responsePromise.map(response -> ok(getJsonPoints(response.asJson())));
     }
@@ -42,18 +42,20 @@ public class API extends Controller {
         String name = json.findPath("name").textValue();
         double latitude = json.get("location").get("lat").asDouble();
         double longitude = json.get("location").get("lon").asDouble();
+        float rating = json.get("rating").floatValue();
 
         String id_token = json.findPath("access_token").textValue();
-        play.Logger.debug("id_token = " + id_token);
 
         ObjectNode newPoint = Json.newObject();
         newPoint.put("name", name);
+        newPoint.put("rating", rating);
         newPoint.put("opening_hours", "");
         newPoint.putObject("location")
                 .put("lat", latitude)
                 .put("lon", longitude);
 
-        play.Logger.debug(String.format("Name: %s, lat: %f, lon: %f; \n Json: %s", name, latitude, longitude, newPoint));
+        play.Logger.debug(String.format("Name: %s, Rating: %f ,lat: %f, lon: %f; \n Json: %s",
+                                            name, rating, latitude, longitude, newPoint));
 
         WSRequest request = ws.url(getAddPointUrl()).setContentType("application/json");
         F.Promise<WSResponse> responsePromise;
