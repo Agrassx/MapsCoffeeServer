@@ -135,7 +135,7 @@ GET                                        |         |     JSON request   |     
 ### Index filling
 
 ```
-first all need to create two mappings: 
+first all need to create three mappings:
 curl -XPUT 'localhost:9200/map' -d '
 {
   "mappings": {
@@ -143,6 +143,7 @@ curl -XPUT 'localhost:9200/map' -d '
       "_all":       { "enabled": false  },
       "properties": {
         "name":    { "type": "string"  },
+        "opening_hours": { "type": "string"  },
         "location": { "type": "geo_point" }
       }
     },
@@ -150,7 +151,21 @@ curl -XPUT 'localhost:9200/map' -d '
       "_all":       { "enabled": false  },
       "properties": {
         "name":    { "type": "string"  },
+        "opening_hours": { "type": "string"  },
         "location": { "type": "geo_point" }
+      }
+    },
+    "cafe_info": {
+      "_all":  { "enabled": false  },
+      "properties": {
+        "last_rating": { "type": "float"  },
+        "added_by": {
+          "include_in_all": false,
+          "properties": {
+            "user_id": { "type": "string"  },
+            "user_name": { "type": "string"  }
+          }
+        }
       }
     }
   }

@@ -2,6 +2,9 @@ use strict;
 use warnings;
 use utf8;
 use feature 'say';
+use Digest::SHA1  qw(sha1 sha1_hex sha1_base64);
+use Encode qw(encode_utf8);
+
 
 =info 
 
@@ -48,6 +51,11 @@ foreach my $id (%{$xs->XMLin($xml)->{node}}) {
     my $lon     = $xs->XMLin($xml)->{node}{$id}{lon};
     my $hours   = get_tag('opening_hours', @$tags);
 
+    $lat = sprintf("%.6f", $lat);
+    $lon = sprintf("%.6f", $lon);
+
+    my $new_id      = sha1_hex(encode_utf8($name).$lat.$lon);
+
     if($name && $lat && $lon && $hours) {
         #say $name;
         #say $lat;
@@ -64,7 +72,7 @@ foreach my $id (%{$xs->XMLin($xml)->{node}}) {
 
 # say Dumper $json;
 
-        my $tx = $ua->put("http://localhost:9200/map/coffee/$id" => {Accept => '*/*'} => $json);
+        my $tx = $ua->put("http://localhost:9200/map/coffee/$new_id" => {Accept => '*/*'} => $json);
         #say Dumper $tx->res->body;
         # last;
     }

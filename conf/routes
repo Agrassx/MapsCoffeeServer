@@ -8,6 +8,7 @@ GET     /api/v3/points                 controllers.API.points(n, s, w, e: String
 PUT     /api/v3/addPoint               controllers.API.addPoint()
 GET     /api/v3/status                 controllers.API.status()
 GET     /api/v3/testValidate           controllers.API.testValidate(token: String)
+GET     /api/v3/cafeinfo               controllers.API.getCafeInfo(id: String)
 
 
 
