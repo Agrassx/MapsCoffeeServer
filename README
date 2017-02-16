@@ -163,7 +163,8 @@ curl -XPUT 'localhost:9200/map' -d '
           "include_in_all": false,
           "properties": {
             "user_id": { "type": "string"  },
-            "user_name": { "type": "string"  }
+            "user_name": { "type": "string"  },
+            "user_photo_url": { "type": "string"  }
           }
         }
       }

@@ -3,8 +3,11 @@ package controllers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import model.elasticresponse.ECafeInfo;
+import model.frontresponse.ResponseCafeInfo;
 import org.apache.commons.codec.binary.Hex;
 import play.libs.F;
 import play.libs.Json;
@@ -113,10 +116,20 @@ public class API extends Controller {
     public F.Promise<Result> getCafeInfo(String id) {
         WSRequest request = ws.url(getCafeInfoUrl(id));
         F.Promise<WSResponse> responsePromise = request.get();
-        return responsePromise.map(response -> ok(response.asJson()));
+        return responsePromise.map(response -> {
+
+            play.Logger.debug(response.getBody());
+
+            ECafeInfo elasticResponse = new Gson().fromJson(response.getBody(), ECafeInfo.class);
+
+            ResponseCafeInfo responseCafeInfo = new ResponseCafeInfo(
+                    elasticResponse.getID(),
+                    elasticResponse.getLastRating(),
+                    elasticResponse.getAddedBy()
+            );
+            return ok(new Gson().toJson(responseCafeInfo));
+        });
     }
-
-
 
 
 
@@ -127,11 +140,13 @@ public class API extends Controller {
         ArrayNode responseArray = (ArrayNode) response.get("hits").get("hits");
         ArrayNode pointsArray = Json.newArray();
         for (JsonNode item : responseArray) {
-            pointsArray.add(item);
+            pointsArray.add(getJsonPoint(item));
         }
         result.putArray("points").addAll(pointsArray);
         return result;
     }
+
+
 
     private String getRequestBody(String n, String s, String w, String e) {
         return String.format("{\n" +
@@ -167,10 +182,10 @@ public class API extends Controller {
         return responsePromise.map(response -> response.getStatus() == 200).get(5000);
     }
 
-
     private String getSearchUrl() {
         return config.getString("url.search");
     }
+
 
     private String getAddPointUrl(String id) {
         return config.getString("url.addPoint")+id;
@@ -184,8 +199,6 @@ public class API extends Controller {
         return config.getString("url.cafeInfo")+id;
     }
 
-
-
     private String generateId(String entropy) {
         try {
             MessageDigest cript = MessageDigest.getInstance("SHA-1");
@@ -196,6 +209,8 @@ public class API extends Controller {
             return null;
         }
     }
+
+
 
     private double getSixDecimalFormatNumber(double number) {
         String newNumber = String.format(Locale.US, "%.6f", number);
@@ -219,6 +234,18 @@ public class API extends Controller {
                 .put("user_id", user_id)
                 .put("user_name", user_name);
         return cafeInfo;
+    }
+
+    private JsonNode getJsonPoint(JsonNode item) {
+        ObjectNode cafeItem = Json.newObject();
+        JsonNode source = item.get("_source");
+        cafeItem.put("id", item.get("_id").asText());
+        cafeItem.put("name", source.get("name").asText());
+        cafeItem.put("opening_hours",source.get("opening_hours").asText());
+        cafeItem.putObject("location")
+                .put("lat", source.get("location").get("lat").asDouble())
+                .put("lon", source.get("location").get("lon").asDouble());
+        return cafeItem;
     }
 
 }
